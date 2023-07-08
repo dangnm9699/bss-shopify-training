@@ -1,9 +1,9 @@
-
+import {Page} from "@shopify/polaris";
 function HomePage() {
     return (
-        <>
-            This is Home Page
-        </>
+        <Page title="Home">
+            This is Home Page!
+        </Page>
     )
 }
 
