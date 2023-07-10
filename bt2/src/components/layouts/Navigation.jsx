@@ -17,6 +17,7 @@ function LayoutNavigation() {
                 ]}
             />
             <Navigation.Section
+                title="Exercise 2"
                 separator
                 items={[
                     {
