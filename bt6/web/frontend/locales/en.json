@@ -1,0 +1,15 @@
+{
+  "HomePage": {
+    "title": "B2B APP",
+    "welcome": "Welcome to SBC - DangNM Training BT6"
+  },
+  "Rules": {
+    "title": "Rule List"
+  },
+  "RuleForm": {
+    "title": "Create new rule"
+  },
+  "NavigationMenu": {
+    "rules": "Rules"
+  }
+}
