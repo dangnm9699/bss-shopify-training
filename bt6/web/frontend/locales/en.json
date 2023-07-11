@@ -7,7 +7,38 @@
     "title": "Rule List"
   },
   "RuleForm": {
-    "title": "Create new rule"
+    "title_create": "New Pricing Rule",
+    "title_edit": "Edit Pricing Rule {{id}}",
+    "information": {
+      "card_title": "General Information",
+      "form_name": "Name",
+      "form_priority": "Priority",
+      "form_priority_helpText": "Please enter an interger from 0 to 99. 0 is the highest priority.",
+      "form_status": "Status",
+      "form_status_options": {
+        "enable": "Enable",
+        "disable": "Disable"
+      }
+    },
+    "condition": {
+      "card_title": "Applied Products",
+      "all": "All products",
+      "products": "Specific products",
+      "collections": "Product collections",
+      "tags": "Product tags",
+      "search": {
+        "products": "Search products",
+        "collections": "Search collections",
+        "tags": "Search tags"
+      }
+    },
+    "change": {
+      "card_title": "Custom prices",
+      "new": "Apply a price to selected products",
+      "decrease_fixed": "Decrease a fixed amount of the original prices of selected products",
+      "decrease_percentage": "Decrease the original prices of selected products by a percentage (%)",
+      "amount_label": "Amount"
+    }
   },
   "NavigationMenu": {
     "rules": "Rules"

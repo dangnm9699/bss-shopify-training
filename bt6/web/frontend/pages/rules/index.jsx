@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
         <TitleBar title={t("Rules.title")} primaryAction={{
             content: 'Create new rule',
             onAction: () => navigate("/rules/add")
-        }} />
+        }}/>
         <Layout>
           <LegacyCard>
           </LegacyCard>

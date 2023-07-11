@@ -1,0 +1,346 @@
+import {
+    LegacyCard,
+    RadioButton,
+    LegacyStack,
+    TextField,
+    Banner,
+    Text,
+    Thumbnail,
+    Autocomplete,
+    Icon,
+    Tag,
+} from "@shopify/polaris";
+import { SearchMinor, CirclePlusMinor } from '@shopify/polaris-icons';
+import { useTranslation } from "react-i18next";
+import PropTypes from "prop-types";
+import { RuleFormCxt } from "../../contexts/RuleFormContext";
+import { useCallback, useContext, useState } from "react";
+import { ResourcePicker } from "@shopify/app-bridge-react";
+
+const ALL = 'ALL';
+const PRODUCTS = 'PRODUCTS';
+const COLLECTIONS = 'COLLECTIONS';
+const TAGS = 'TAGS';
+
+const Options = {
+    [ALL]: '0',
+    [PRODUCTS]: '1',
+    [COLLECTIONS]: '2',
+    [TAGS]: '3',
+}
+
+const ConditionOption = ({ cKey, value, option, onChange }) => {
+    const { t } = useTranslation();
+
+    return (
+        <RadioButton
+            key={cKey}
+            label={t(`RuleForm.condition.${option.toLowerCase()}`)}
+            checked={'' + value === Options[option]}
+            id={option}
+            name={option.toLowerCase()}
+            onChange={(_, val) => onChange({ condition_type: parseInt(Options[val]) })}
+        />
+    )
+}
+
+ConditionOption.propTypes = {
+    cKey: PropTypes.string,
+    value: PropTypes.number,
+    option: PropTypes.string,
+    onChange: PropTypes.func
+}
+
+const AllProducts = ({ value, onChange }) => {
+    return (
+        <ConditionOption
+            key={`option_condition__all`}
+            cKey={`option_condition__all`}
+            value={value}
+            option={ALL}
+            onChange={onChange}
+        />
+    )
+}
+
+const SpecificProducts = ({ value, onChange, selected }) => {
+    const { t } = useTranslation();
+
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <ConditionOption
+                key={`option_condition__products`}
+                cKey={`option_condition__products`}
+                value={value}
+                option={PRODUCTS}
+                onChange={onChange}
+            />
+            {
+                '' + value === Options[PRODUCTS]
+                    ? <TextField
+                        onFocus={() => setOpen(true)}
+                        placeholder={t("RuleForm.condition.search.products")}
+                        autoComplete="off"
+                    />
+                    : null
+            }
+            {
+                ('' + value === Options[PRODUCTS] && selected && selected.length)
+                    ? <LegacyStack vertical>
+                        <div></div>
+                        {selected.map((product) => (
+                            <Banner
+                                key={product.handle}
+                                hideIcon
+                                onDismiss={() => {
+                                    const index = selected.findIndex(item => item.id === product.id);
+                                    if (index > -1) {
+                                        selected.splice(index, 1);
+                                        onChange({ condition_products: [...selected] })
+                                    }
+                                }}
+                            >
+                                <LegacyStack vertical={false}>
+                                    <Thumbnail
+                                        source={(product.images && product.images.length) ? product.images[0].originalSrc : null}
+                                        alt={product.handle}
+                                    />
+                                    <Text variant="bodyLg" as="p" alignment="start">
+                                        {product.title}
+                                    </Text>
+                                </LegacyStack>
+                            </Banner>
+                        ))}
+                    </LegacyStack>
+                    : null
+            }
+            <ResourcePicker
+                resourceType="Product"
+                showVariants={false}
+                actionVerb={"select"}
+                open={open}
+                initialSelectionIds={selected}
+                onSelection={(ids) => { onChange({ condition_products: ids.selection }); setOpen(false) }}
+                onCancel={() => setOpen(false)}
+            />
+        </>
+    )
+}
+
+const SpecificCollections = ({ value, onChange, selected }) => {
+    const { t } = useTranslation();
+
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <ConditionOption
+                key={`option_condition__collections`}
+                cKey={`option_condition__collections`}
+                value={value}
+                option={COLLECTIONS}
+                onChange={onChange}
+            />
+            {
+                '' + value === Options[COLLECTIONS]
+                    ? <TextField
+                        onFocus={() => setOpen(true)}
+                        placeholder={t("RuleForm.condition.search.collections")}
+                        autoComplete="off"
+                    />
+                    : null
+            }
+            {
+                ('' + value === Options[COLLECTIONS] && selected && selected.length)
+                    ? <LegacyStack vertical>
+                        <div></div>
+                        {selected.map((collection) => (
+                            <Banner
+                                key={collection.handle}
+                                hideIcon
+                                onDismiss={() => {
+                                    const index = selected.findIndex(item => item.id === collection.id);
+                                    if (index > -1) {
+                                        selected.splice(index, 1);
+                                        onChange({ condition_collections: [...selected] })
+                                    }
+                                }}
+                            >
+                                <LegacyStack vertical={false}>
+                                    <Thumbnail
+                                        source={collection.image}
+                                        alt={collection.handle}
+                                    />
+                                    <Text variant="bodyLg" as="p" alignment="start">
+                                        {collection.title}
+                                    </Text>
+                                </LegacyStack>
+                            </Banner>
+                        ))}
+                    </LegacyStack>
+                    : null
+            }
+            <ResourcePicker
+                resourceType="Collection"
+                actionVerb={"select"}
+                open={open}
+                initialSelectionIds={selected}
+                onSelection={(ids) => { onChange({ condition_collections: ids.selection }); setOpen(false) }}
+                onCancel={() => setOpen(false)}
+            />
+        </>
+    )
+}
+
+const SpecificTags = ({ value, onChange, selected, deselectedOptions, setDeselectedOptions }) => {
+    const { t } = useTranslation();
+
+    const [inputValue, setInputValue] = useState('');
+    const [disabled, setDisabled] = useState(false);
+    const [options, setOptions] = useState(deselectedOptions);
+    const [loading, setLoading] = useState(false);
+
+    const updateText = useCallback(
+        (value) => {
+            setInputValue(value);
+
+            if (!loading) {
+                setLoading(true);
+            }
+
+            setTimeout(() => {
+                if (value === '') {
+                    setOptions(deselectedOptions);
+                    setLoading(false);
+                    return;
+                }
+                const filterRegex = new RegExp(value.trim(), 'i');
+                const resultOptions = options.filter((option) =>
+                    option.label.match(filterRegex),
+                );
+                setDisabled(!value.trim() || resultOptions.filter(option => option.value.toLowerCase() === value.trim().toLowerCase()).length > 0)
+                setOptions(resultOptions);
+                setLoading(false);
+            }, 300);
+        },
+        [deselectedOptions, loading, options],
+    );
+
+    const updateSelection = useCallback(
+        (value) => {
+            onChange({ condition_tags: value });
+        },
+        [options],
+    );
+
+    const textField = (
+        <Autocomplete.TextField
+            onChange={updateText}
+            value={inputValue}
+            prefix={<Icon source={SearchMinor} />}
+            placeholder={t("RuleForm.condition.search.tags")}
+            autoComplete="off"
+        />
+    )
+
+    return (
+        <>
+            <ConditionOption
+                key={`option_condition__tags`}
+                cKey={`option_condition__tags`}
+                value={value}
+                option={TAGS}
+                onChange={onChange}
+            />
+            {
+                ('' + value === Options[TAGS])
+                    ? <Autocomplete
+                        actionBefore={{
+                            accessibilityLabel: 'Action label',
+                            badge: {
+                                status: 'new',
+                                content: 'New!',
+                            },
+                            content: `Add ${inputValue}`,
+                            icon: CirclePlusMinor,
+                            wrapOverflow: true,
+                            disabled: disabled,
+                            onAction: () => {
+                                setOptions(prev => [...prev, { label: inputValue, value: inputValue.toLowerCase() }]);
+                                setDeselectedOptions(prev => [...prev, { label: inputValue, value: inputValue.toLowerCase() }]);
+                                onChange({ condition_tags: [...selected, inputValue] });
+                                setDisabled(true);
+                            },
+                        }}
+                        allowMultiple
+                        options={options}
+                        selected={selected}
+                        onSelect={updateSelection}
+                        listTitle="Suggested tags"
+                        loading={loading}
+                        textField={textField}
+                    />
+                    : null
+            }
+            {
+                ('' + value === Options[TAGS] && selected && selected.length)
+                    ? (
+                        <LegacyStack vertical>
+                            <div></div>
+                            <LegacyStack vertical={false}>
+                                {selected.map((tag) => (
+                                    <Tag key={tag} onRemove={() => {
+                                        const newArr = selected.filter(item => item !== tag);
+                                        onChange({ condition_tags: [...newArr] })
+                                    }}>{tag}</Tag>
+                                ))}
+                            </LegacyStack>
+                        </LegacyStack>
+                    )
+                    : null
+            }
+        </>
+    )
+}
+
+export default function RuleFormCondition() {
+    const { t } = useTranslation();
+    const { rule, setStates } = useContext(RuleFormCxt);
+    const [tags, setTags] = useState([
+        { value: 'rustic', label: 'Rustic' },
+        { value: 'antique', label: 'Antique' },
+        { value: 'vinyl', label: 'Vinyl' },
+        { value: 'vintage', label: 'Vintage' },
+        { value: 'refurbished', label: 'Refurbished' },
+    ])
+
+    return (
+        <LegacyCard title={t("RuleForm.condition.card_title")} sectioned>
+            <LegacyStack vertical>
+                <AllProducts
+                    value={rule.condition_type}
+                    onChange={setStates}
+                />
+                <SpecificProducts
+                    value={rule.condition_type}
+                    onChange={setStates}
+                    selected={rule.condition_products}
+                />
+                <SpecificCollections
+                    value={rule.condition_type}
+                    onChange={setStates}
+                    selected={rule.condition_collections}
+                />
+                <SpecificTags
+                    value={rule.condition_type}
+                    onChange={setStates}
+                    selected={rule.condition_tags}
+                    deselectedOptions={tags}
+                    setDeselectedOptions={setTags}
+                />
+            </LegacyStack>
+        </LegacyCard>
+    )
+}
