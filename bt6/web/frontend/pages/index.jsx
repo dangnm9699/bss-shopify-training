@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 export default function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
   return (
     <Page narrowWidth>
       <TitleBar title={t("HomePage.title")} primaryAction={null} />

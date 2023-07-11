@@ -8,6 +8,7 @@ import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import { RuleFormCxt } from "../../contexts/RuleFormContext";
+import { GlobalCtx } from "../../contexts/GlobalContext";
 
 const NEW = 'NEW';
 const DECREASE_FIXED = 'DECREASE_FIXED';
@@ -48,13 +49,15 @@ ChangeOption.propTypes = {
 }
 
 const ChangeField = ({ value, option, onChange }) => {
+    const { shop } = useContext(GlobalCtx);
+    console.log(shop);
     const { t } = useTranslation();
     const valueType = valueTypes[option];
 
     const field = <TextField
         label={t("RuleForm.change.amount_label")}
         value={value}
-        suffix={valueType === "percentage" ? "%" : "currency"}
+        suffix={valueType === "percentage" ? "%" : shop.currencyCode}
         onChange={(value) => onChange({ change_value: parseFloat(value || 0) })}
         min={0}
         max={valueType === "percentage" ? 100 : undefined}
