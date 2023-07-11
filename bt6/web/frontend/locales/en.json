@@ -4,7 +4,9 @@
     "welcome": "Welcome to SBC - DangNM Training BT6"
   },
   "Rules": {
-    "title": "Rule List"
+    "title": "Rule List",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "RuleForm": {
     "title_create": "New Pricing Rule",

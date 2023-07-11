@@ -3,8 +3,9 @@ import { createContext, useReducer } from "react";
 export const RuleFormCxt = createContext();
 
 const actions = Object.freeze({
-    SetStates: 'states'
-})
+    SetStates: 'states',
+    SetErrors: 'errors',
+});
 
 const initialState = {
     //
@@ -18,7 +19,13 @@ const initialState = {
     condition_tags: [],
     //
     change_type: 0,
-    change_value: 0
+    change_value: 0,
+    //
+    errors: {
+        name: null,
+        priority: null,
+        change_value: null,
+    }
 };
 
 const reducer = (state, action) => {
@@ -28,6 +35,14 @@ const reducer = (state, action) => {
                 ...state,
                 ...action.states
             };
+        case actions.SetErrors:
+            return {
+                ...state,
+                errors: {
+                    ...state.errors,
+                    ...action.errors
+                }
+            }
         default:
             return state;
     }
@@ -40,6 +55,9 @@ export function RuleFormCxtProvider({ children }) {
             rule: state,
             setStates: (states) => {
                 dispatch({ type: actions.SetStates, states })
+            },
+            setErrors: (errors) => {
+                dispatch({ type: actions.SetErrors, errors });
             }
         }}>
             {children}

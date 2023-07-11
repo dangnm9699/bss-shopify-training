@@ -48,9 +48,8 @@ ChangeOption.propTypes = {
     onChange: PropTypes.func
 }
 
-const ChangeField = ({ value, option, onChange }) => {
+const ChangeField = ({ value, option, onChange, error, resetErrors }) => {
     const { shop } = useContext(GlobalCtx);
-    console.log(shop);
     const { t } = useTranslation();
     const valueType = valueTypes[option];
 
@@ -58,12 +57,13 @@ const ChangeField = ({ value, option, onChange }) => {
         label={t("RuleForm.change.amount_label")}
         value={value}
         suffix={valueType === "percentage" ? "%" : shop.currencyCode}
-        onChange={(value) => onChange({ change_value: parseFloat(value || 0) })}
+        onChange={(value) => {onChange({ change_value: parseFloat(value || 0) }); resetErrors({ change_value: null })}}
         min={0}
         max={valueType === "percentage" ? 100 : undefined}
         step={0.01}
         type="number"
         autoComplete="off"
+        error={error}
     />
 
     return field
@@ -73,11 +73,12 @@ ChangeField.propTypes = {
     value: PropTypes.number,
     option: PropTypes.string,
     onChange: PropTypes.func,
-    type: PropTypes.string,
+    error: PropTypes.string,
+    resetErrors: PropTypes.func
 }
 
 export default function RuleFormChange() {
-    const { rule, setStates } = useContext(RuleFormCxt);
+    const { rule, setStates, setErrors } = useContext(RuleFormCxt);
     const { t } = useTranslation();
 
     return (
@@ -96,6 +97,8 @@ export default function RuleFormChange() {
                     value={rule.change_value}
                     option={'' + rule.change_type}
                     onChange={setStates}
+                    error={rule.errors.change_value}
+                    resetErrors={setErrors}
                 />
             </LegacyStack>
         </LegacyCard>
