@@ -34,21 +34,19 @@ function Content() {
   const { setStates } = useContext(GlobalCtx);
 
   const {
-    data
+    data: shopInfo
   } = useAppQuery({
     url: "/api/shop",
     reactQueryOptions: {
-      onSuccess: () => {
-        console.log("done");
-      },
+      onSuccess: () => {},
     },
   });
 
   useEffect(() => {
-    if (data?.payload?.body?.data?.shop) {
-      setStates(data.payload.body.data.shop);
+    if (shopInfo?.payload?.body?.data?.shop) {
+      setStates(shopInfo.payload.body.data.shop);
     }
-  }, [data]);
+  }, [shopInfo]);
 
   return (
     <>

@@ -25,6 +25,8 @@ const initialState = {
         name: null,
         priority: null,
         change_value: null,
+        condition_products: null,
+        condition_collections: null,
     }
 };
 

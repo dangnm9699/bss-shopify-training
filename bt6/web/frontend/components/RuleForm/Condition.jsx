@@ -9,13 +9,15 @@ import {
     Autocomplete,
     Icon,
     Tag,
+    SkeletonBodyText,
 } from "@shopify/polaris";
-import { SearchMinor, CirclePlusMinor } from '@shopify/polaris-icons';
+import { SearchMinor, CirclePlusMinor, ImageMajor } from '@shopify/polaris-icons';
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import { RuleFormCxt } from "../../contexts/RuleFormContext";
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { ResourcePicker } from "@shopify/app-bridge-react";
+import { useAppQuery } from "../../hooks";
 
 const ALL = 'ALL';
 const PRODUCTS = 'PRODUCTS';
@@ -63,7 +65,7 @@ const AllProducts = ({ value, onChange }) => {
     )
 }
 
-const SpecificProducts = ({ value, onChange, selected }) => {
+const SpecificProducts = ({ value, onChange, selected, error }) => {
     const { t } = useTranslation();
 
     const [open, setOpen] = useState(false);
@@ -83,6 +85,7 @@ const SpecificProducts = ({ value, onChange, selected }) => {
                         onFocus={() => setOpen(true)}
                         placeholder={t("RuleForm.condition.search.products")}
                         autoComplete="off"
+                        error={error}
                     />
                     : null
             }
@@ -104,7 +107,10 @@ const SpecificProducts = ({ value, onChange, selected }) => {
                             >
                                 <LegacyStack vertical={false}>
                                     <Thumbnail
-                                        source={(product.images && product.images.length) ? product.images[0].originalSrc : null}
+                                        source={
+                                            (product.images && product.images.length) 
+                                            ? (product.images[0].originalSrc || product.images[0].url) 
+                                            : ImageMajor}
                                         alt={product.handle}
                                     />
                                     <Text variant="bodyLg" as="p" alignment="start">
@@ -129,7 +135,7 @@ const SpecificProducts = ({ value, onChange, selected }) => {
     )
 }
 
-const SpecificCollections = ({ value, onChange, selected }) => {
+const SpecificCollections = ({ value, onChange, selected, error }) => {
     const { t } = useTranslation();
 
     const [open, setOpen] = useState(false);
@@ -149,6 +155,7 @@ const SpecificCollections = ({ value, onChange, selected }) => {
                         onFocus={() => setOpen(true)}
                         placeholder={t("RuleForm.condition.search.collections")}
                         autoComplete="off"
+                        error={error}
                     />
                     : null
             }
@@ -170,7 +177,11 @@ const SpecificCollections = ({ value, onChange, selected }) => {
                             >
                                 <LegacyStack vertical={false}>
                                     <Thumbnail
-                                        source={collection.image}
+                                        source={
+                                            (collection.image && (collection.image.url || collection.image.originalSrc))
+                                                ? (collection.image.url || collection.image.originalSrc)
+                                                : ImageMajor
+                                        }
                                         alt={collection.handle}
                                     />
                                     <Text variant="bodyLg" as="p" alignment="start">
@@ -308,13 +319,83 @@ const SpecificTags = ({ value, onChange, selected, deselectedOptions, setDeselec
 export default function RuleFormCondition() {
     const { t } = useTranslation();
     const { rule, setStates } = useContext(RuleFormCxt);
-    const [tags, setTags] = useState([
-        { value: 'rustic', label: 'Rustic' },
-        { value: 'antique', label: 'Antique' },
-        { value: 'vinyl', label: 'Vinyl' },
-        { value: 'vintage', label: 'Vintage' },
-        { value: 'refurbished', label: 'Refurbished' },
-    ])
+    const [tags, setTags] = useState([]);
+    const [loading, setLoading] = useState({
+        products: true,
+        collections: true,
+        tags: true,
+    });
+
+    const {
+        data: productTags,
+        isLoading: fetchingTags
+    } = useAppQuery({
+        url: "/api/shop/product-tags",
+        reactQueryOptions: {
+            onSuccess: () => { },
+        },
+    });
+
+    useEffect(() => {
+        if (productTags) {
+            if (productTags?.payload?.body?.data?.shop?.productTags?.edges) {
+                setTags(productTags?.payload?.body?.data?.shop?.productTags?.edges.map(tag => ({
+                    label: tag.node,
+                    value: tag.node
+                })));
+            }
+            setLoading(prev => ({ ...prev, tags: false }));
+        }
+    }, [productTags]);
+
+    const {
+        data: products,
+        isLoading: fetchingProducts
+    } = useAppQuery({
+        url: `/api/products?ids=${rule.condition_products.map(item => item.id).join(",")}`,
+        reactQueryOptions: {
+            onSuccess: () => { },
+        },
+    });
+
+    useEffect(() => {
+        if (products) {
+            if (products?.payload?.body?.data?.nodes) {
+                setStates({
+                    condition_products: products?.payload?.body?.data?.nodes.map(node => {
+                        const {
+                            images,
+                            hasOnlyDefaultVariant: _hasOnlyDefaultVariant,
+                            priceRangeV2: _priceRangeV2,
+                            ...product
+                        } = node;
+                        product.images = images?.edges?.map(image => image.node);
+                        return product;
+                    })
+                })
+            }
+            setLoading(prev => ({ ...prev, products: false }));
+        }
+    }, [products]);
+
+    const {
+        data: collections,
+        isLoading: fetchingCollections
+    } = useAppQuery({
+        url: `/api/collections?ids=${rule.condition_collections.map(item => item.id).join(",")}`,
+        reactQueryOptions: {
+            onSuccess: () => { },
+        },
+    });
+
+    useEffect(() => {
+        if (collections) {
+            if (collections?.payload?.body?.data?.nodes) {
+                setStates({ condition_collections: collections?.payload?.body?.data?.nodes });
+            }
+            setLoading(prev => ({ ...prev, collections: false }));
+        }
+    }, [collections]);
 
     return (
         <LegacyCard title={t("RuleForm.condition.card_title")} sectioned>
@@ -323,23 +404,43 @@ export default function RuleFormCondition() {
                     value={rule.condition_type}
                     onChange={setStates}
                 />
-                <SpecificProducts
-                    value={rule.condition_type}
-                    onChange={setStates}
-                    selected={rule.condition_products}
-                />
-                <SpecificCollections
-                    value={rule.condition_type}
-                    onChange={setStates}
-                    selected={rule.condition_collections}
-                />
-                <SpecificTags
-                    value={rule.condition_type}
-                    onChange={setStates}
-                    selected={rule.condition_tags}
-                    deselectedOptions={tags}
-                    setDeselectedOptions={setTags}
-                />
+                {
+                    (fetchingProducts || loading.products) ? (
+                        <SkeletonBodyText lines={1} />
+                    ) : (
+                        <SpecificProducts
+                            value={rule.condition_type}
+                            onChange={setStates}
+                            selected={rule.condition_products}
+                            error={rule.errors.condition_products}
+                        />
+                    )
+                }
+                {
+                    (fetchingCollections || loading.collections) ? (
+                        <SkeletonBodyText lines={1} />
+                    ) : (
+                        <SpecificCollections
+                            value={rule.condition_type}
+                            onChange={setStates}
+                            selected={rule.condition_collections}
+                            error={rule.errors.condition_collections}
+                        />
+                    )
+                }
+                {
+                    (fetchingTags || loading.tags) ? (
+                        <SkeletonBodyText lines={1} />
+                    ) : (
+                        <SpecificTags
+                            value={rule.condition_type}
+                            onChange={setStates}
+                            selected={rule.condition_tags}
+                            deselectedOptions={tags}
+                            setDeselectedOptions={setTags}
+                        />
+                    )
+                }
             </LegacyStack>
         </LegacyCard>
     )
