@@ -3,7 +3,8 @@ import { createContext, useReducer } from "react";
 export const GlobalCtx = createContext();
 
 const actions = Object.freeze({
-    SetStates: 'states'
+    SetStates: 'states',
+    SetAppInstalltion: 'metafields',
 })
 
 const initialState = {
@@ -15,7 +16,10 @@ const initialState = {
     "currencyCode": "",
     "currencyFormats": {
         "moneyFormat": ""
-    }
+    },
+    "currentAppInstallation": {
+        "id": "",
+    },
 };
 
 const reducer = (state, action) => {
@@ -25,6 +29,9 @@ const reducer = (state, action) => {
                 ...state,
                 ...action.states
             };
+        case actions.SetAppInstalltion:
+            console.log('state', state)
+            state.currentAppInstallation = action.states;
         default:
             return state;
     }
@@ -37,6 +44,9 @@ export function GlobalCtxProvider({ children }) {
             shop: state,
             setStates: (states) => {
                 dispatch({ type: actions.SetStates, states })
+            },
+            setAppInstalltion: (states) => {
+                dispatch({ type: actions.SetAppInstalltion, states })
             }
         }}>
             {children}

@@ -7,6 +7,9 @@ function init(app) {
             case "get":
                 app.get(api.path, api.handler)
                 break;
+            case "post":
+                app.post(api.path, api.handler)
+                break;
         }
     });
     ProductApi.forEach(api => {

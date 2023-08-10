@@ -1,0 +1,11 @@
+<script>
+    const cpSettings = {{ app.metafields.secret_keys.api_key_1 }};
+    const currencyBSS = {{ app.metafields.secret_keys.api_key_2 }};
+</script>
+
+{% schema %}
+{
+  "name": "Config Header",
+  "target": "head",
+}
+{% endschema %}

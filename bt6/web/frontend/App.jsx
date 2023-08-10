@@ -31,7 +31,7 @@ export default function App() {
 function Content() {
   const pages = import.meta.globEager("./pages/**/!(*.test.[jt]sx)*.([jt]sx)");
   const { t } = useTranslation();
-  const { setStates } = useContext(GlobalCtx);
+  const { setStates, setAppInstalltion } = useContext(GlobalCtx);
 
   const {
     data: shopInfo
@@ -42,11 +42,26 @@ function Content() {
     },
   });
 
+  const {
+    data: shopCurrentAppInstallation
+  } = useAppQuery({
+    url: "/api/shop/current-app-installation",
+    reactQueryOptions: {
+      onSuccess: () => {},
+    },
+  });
+
   useEffect(() => {
     if (shopInfo?.payload?.body?.data?.shop) {
       setStates(shopInfo.payload.body.data.shop);
     }
   }, [shopInfo]);
+
+  useEffect(() => {
+    if (shopCurrentAppInstallation?.payload?.body?.data?.currentAppInstallation) {
+      setAppInstalltion(shopCurrentAppInstallation.payload.body.data.currentAppInstallation);
+    }
+  }, [shopCurrentAppInstallation]);
 
   return (
     <>
